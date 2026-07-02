@@ -11,6 +11,8 @@ import org.springframework.web.client.RestClient
 class AIService(
     @Value("\${gemini.api-key}")
     private val apiKey: String,
+    @Value("\${gemini.explanation-model}")
+    private val explanationAIModel: String,
 
     private val restClientBuilder: RestClient.Builder
 ) {
@@ -26,7 +28,7 @@ class AIService(
             .header("x-goog-api-key", apiKey)
             .body(
                 mapOf(
-                    "model" to "gemini-2.5-flash-lite",
+                    "model" to explanationAIModel,
                     "input" to question
                 )
             )
