@@ -3,13 +3,13 @@ services:
     image: postgres:16-alpine
     container_name: book-ai-postgres
     environment:
-      POSTGRES_DB: bookaidb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,10 +26,10 @@ services:
       - "8080:8080"
     environment:
       DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: bookaidb
-      DB_USER: postgres
-      DB_PASSWORD: postgres
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
 
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
