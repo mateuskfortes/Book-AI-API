@@ -46,4 +46,4 @@ volumes:
 
 networks:
   backend:
-    internal: true
+    driver: bridge
