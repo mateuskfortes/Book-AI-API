@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: bookaidb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +14,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - backend
 
   app:
     build:
@@ -40,7 +40,12 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - backend
 
 volumes:
   postgres_data:
 
+networks:
+  backend:
+    internal: true
