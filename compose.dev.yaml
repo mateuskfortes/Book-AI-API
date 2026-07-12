@@ -18,7 +18,6 @@ services:
       - backend
 
   app:
-    image: ghcr.io/mateuskfortes/book-ai-api:${IMAGE_TAG}
     build:
       context: .
       dockerfile: Dockerfile
