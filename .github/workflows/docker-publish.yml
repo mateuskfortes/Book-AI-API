@@ -59,3 +59,46 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production VPS Server
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy compose files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          source: "compose.yaml"
+          target: "/home/${{ secrets.USERNAME }}/book-ai-api/"
+          timeout: 60s
+          overwrite: true
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          IMAGE_TAG: sha-${{ github.sha }}
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          envs: IMAGE_TAG
+          script: |
+            cd /home/${{ secrets.USERNAME }}/book-ai-api
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            
+            sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
+
+            docker compose -f compose.yaml pull app
+            docker compose -f compose.yaml up app --no-deps -d
+
+            docker image prune -af --filter "until=48h"
+
+            docker compose -f compose.yaml ps
