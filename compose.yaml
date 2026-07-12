@@ -19,9 +19,6 @@ services:
 
   app:
     image: ghcr.io/mateuskfortes/book-ai-api:${IMAGE_TAG}
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: book-ai-api
     ports:
       - "8080:8080"
