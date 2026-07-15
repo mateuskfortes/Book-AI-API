@@ -17,7 +17,7 @@ services:
     networks:
       - backend
 
-  app:
+  book-ai:
     image: ghcr.io/mateuskfortes/book-ai-api:${IMAGE_TAG}
     container_name: book-ai-api
     environment:

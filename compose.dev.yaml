@@ -17,7 +17,7 @@ services:
     networks:
       - backend
 
-  app:
+  book-ai:
     build:
       context: .
       dockerfile: Dockerfile
