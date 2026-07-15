@@ -41,6 +41,7 @@ services:
     restart: unless-stopped
     networks:
       - backend
+      - shared-proxy
 
 volumes:
   postgres_data:
