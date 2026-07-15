@@ -96,8 +96,8 @@ jobs:
             
             sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
-            docker compose -f compose.yaml pull app
-            docker compose -f compose.yaml up app --no-deps -d
+            docker compose -f compose.yaml pull book-ai
+            docker compose -f compose.yaml up book-ai --no-deps -d
 
             docker image prune -af --filter "until=48h"
 
