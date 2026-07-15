@@ -20,9 +20,8 @@ services:
   app:
     image: ghcr.io/mateuskfortes/book-ai-api:${IMAGE_TAG}
     container_name: book-ai-api
-    ports:
-      - "8081:8080"
     environment:
+      SERVER_PORT: ${SERVER_PORT}
       DB_HOST: postgres
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
@@ -47,3 +46,5 @@ volumes:
 networks:
   backend:
     driver: bridge
+  shared-proxy:
+    external: true
