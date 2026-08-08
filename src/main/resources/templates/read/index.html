@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book AI | Reader</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0f172a;
+            --card: #111827;
+            --border: #243244;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #7c3aed;
+            --accent-hover: #6d28d9;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, Arial, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, var(--bg) 55%);
+            color: var(--text);
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 1.5rem;
+            display: grid;
+            gap: 1rem;
+            grid-template-rows: auto auto 1fr;
+        }
+
+        .header,
+        .controls,
+        .reader-shell {
+            width: min(1200px, 100%);
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .brand {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 4vw, 2.3rem);
+        }
+
+        .brand p,
+        .status {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .links {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        a, button {
+            font: inherit;
+        }
+
+        a {
+            color: #c4b5fd;
+            text-decoration: none;
+        }
+
+        .controls {
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: rgba(17, 24, 39, 0.9);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 1 1 520px;
+            min-width: 0;
+            padding: 0.9rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #0b1220;
+            color: var(--text);
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--accent-hover), #4338ca);
+        }
+
+        button.secondary {
+            background: #1f2937;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .status {
+            min-height: 1.25rem;
+            font-size: 0.95rem;
+        }
+
+        .status.error {
+            color: var(--error);
+        }
+
+        .status.success {
+            color: var(--success);
+        }
+
+        .reader-shell {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: rgba(17, 24, 39, 0.9);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+            min-height: 0;
+        }
+
+        .reader-shell.is-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            margin: 0;
+            padding: 0.75rem;
+            border: 0;
+            border-radius: 0;
+            background: #0f172a;
+            box-shadow: none;
+        }
+
+        body.reader-fullscreen {
+            overflow: hidden;
+        }
+
+        body.reader-fullscreen .header,
+        body.reader-fullscreen .controls {
+            display: none;
+        }
+
+        .reader-toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .reader {
+            position: relative;
+            min-height: 60vh;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .reader-shell.is-fullscreen .reader {
+            min-height: 0;
+            height: 100%;
+            border-radius: 12px;
+        }
+
+        .reader-shell.is-fullscreen .reader-toolbar button#fullscreen-toggle {
+            display: none;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 100%;
+            min-height: 60vh;
+        }
+
+        .reader-shell.is-fullscreen #viewer {
+            min-height: 0;
+            pointer-events: none;
+        }
+
+        .fullscreen-gesture-layer {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: transparent;
+        }
+
+        .reader-shell.is-fullscreen .fullscreen-gesture-layer {
+            display: block;
+        }
+
+        .page-jump-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.56);
+            padding: 1rem;
+        }
+
+        .page-jump-overlay.is-open {
+            display: flex;
+        }
+
+        .page-jump-card {
+            width: min(420px, 100%);
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: rgba(17, 24, 39, 0.98);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .page-jump-card .row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .page-jump-card label {
+            display: grid;
+            gap: 0.4rem;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .page-jump-card input {
+            flex: unset;
+            width: 100%;
+        }
+
+        @media (max-width: 720px) {
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .reader-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .reader-shell.is-fullscreen {
+                padding: 0.5rem;
+            }
+
+            .reader-shell.is-fullscreen .reader-toolbar {
+                gap: 0.5rem;
+            }
+
+            .reader-shell.is-fullscreen #viewer {
+                min-height: 0;
+            }
+
+            .page-jump-card {
+                width: min(100%, 340px);
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="header">
+        <div class="brand">
+            <h1>EPUB reader</h1>
+            <p>Powered by epub.js and preloaded with a public domain sample book.</p>
+        </div>
+        <div class="links">
+            <a href="/signin">Sign in</a>
+            <a href="/signup">Sign up</a>
+        </div>
+    </section>
+
+    <section class="controls">
+        <div class="control-row">
+            <input id="epub-url" type="url" spellcheck="false" aria-label="EPUB URL">
+            <button id="load-book" type="button">Load EPUB</button>
+        </div>
+        <div id="status" class="status">Loading a sample EPUB...</div>
+    </section>
+
+    <section class="reader-shell">
+        <div class="reader-toolbar">
+            <div>
+                <button id="prev-page" class="secondary" type="button">Previous</button>
+                <button id="next-page" class="secondary" type="button">Next</button>
+                <button id="fullscreen-toggle" class="secondary" type="button">Fullscreen</button>
+            </div>
+            <div id="location" class="status">Page 1</div>
+        </div>
+        <div class="reader">
+            <div id="viewer"></div>
+            <div id="fullscreen-gesture-layer" class="fullscreen-gesture-layer" aria-hidden="true"></div>
+            <div id="page-jump-overlay" class="page-jump-overlay" aria-hidden="true">
+                <div class="page-jump-card" role="dialog" aria-label="Jump to page">
+                    <div class="row">
+                        <button id="overlay-prev" class="secondary" type="button">Prev</button>
+                        <button id="overlay-next" class="secondary" type="button">Next</button>
+                        <button id="overlay-close" class="secondary" type="button">Close</button>
+                    </div>
+                    <label>
+                        Page
+                        <input id="page-jump-input" type="number" min="1" inputmode="numeric">
+                    </label>
+                    <div class="row">
+                        <button id="page-jump-go" type="button">Go to page</button>
+                    </div>
+                    <div id="page-jump-status" class="status"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+<script>
+    const DEFAULT_EPUB_URL = '/sample/moby-dick.epub';
+    const LOAD_TIMEOUT_MS = 15000;
+
+    const urlInput = document.getElementById('epub-url');
+    const status = document.getElementById('status');
+    const locationLabel = document.getElementById('location');
+    const viewer = document.getElementById('viewer');
+    const loadButton = document.getElementById('load-book');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const fullscreenToggle = document.getElementById('fullscreen-toggle');
+    const readerShell = document.querySelector('.reader-shell');
+    const gestureLayer = document.getElementById('fullscreen-gesture-layer');
+    const pageJumpOverlay = document.getElementById('page-jump-overlay');
+    const overlayPrev = document.getElementById('overlay-prev');
+    const overlayNext = document.getElementById('overlay-next');
+    const overlayClose = document.getElementById('overlay-close');
+    const pageJumpInput = document.getElementById('page-jump-input');
+    const pageJumpGo = document.getElementById('page-jump-go');
+    const pageJumpStatus = document.getElementById('page-jump-status');
+
+    let book = null;
+    let rendition = null;
+    let isFullscreen = false;
+    let totalPages = 1;
+
+    function setControlsDisabled(disabled) {
+        prevButton.disabled = disabled;
+        nextButton.disabled = disabled;
+        loadButton.disabled = disabled;
+        fullscreenToggle.disabled = disabled;
+    }
+
+    urlInput.value = DEFAULT_EPUB_URL;
+
+    function setStatus(text, type = '') {
+        status.textContent = text;
+        status.className = type ? `status ${type}` : 'status';
+    }
+
+    function setLocation(cfi) {
+        locationLabel.textContent = cfi ? cfi : 'Ready';
+    }
+
+    function setJumpStatus(text, type = '') {
+        pageJumpStatus.textContent = text || '';
+        pageJumpStatus.className = type ? `status ${type}` : 'status';
+    }
+
+    function setFullscreen(active) {
+        isFullscreen = active;
+        readerShell.classList.toggle('is-fullscreen', active);
+        document.body.classList.toggle('reader-fullscreen', active);
+        document.body.style.overflow = active ? 'hidden' : '';
+        fullscreenToggle.textContent = active ? 'Exit fullscreen' : 'Fullscreen';
+        if (!active) {
+            hidePageOverlay();
+        }
+        if (rendition) {
+            rendition.resize();
+        }
+    }
+
+    function showPageOverlay() {
+        if (!isFullscreen) {
+            return;
+        }
+
+        pageJumpOverlay.classList.add('is-open');
+        pageJumpOverlay.setAttribute('aria-hidden', 'false');
+        pageJumpInput.value = String(getCurrentPageNumber());
+        setJumpStatus(`1 - ${totalPages}`);
+        pageJumpInput.focus();
+        pageJumpInput.select();
+    }
+
+    function hidePageOverlay() {
+        pageJumpOverlay.classList.remove('is-open');
+        pageJumpOverlay.setAttribute('aria-hidden', 'true');
+        setJumpStatus('');
+    }
+
+    function getCurrentPageNumber() {
+        const page = Number(locationLabel.dataset.page || '1');
+        return Number.isFinite(page) && page > 0 ? page : 1;
+    }
+
+    function updatePageLocation(location) {
+        const page = Number(location?.start?.location || 0);
+        if (Number.isFinite(page) && page > 0) {
+            locationLabel.dataset.page = String(page);
+        }
+        setLocation(location?.start?.cfi || 'Reading');
+    }
+
+    function goToPage(pageNumber) {
+        if (!book || !rendition || !book.locations || typeof book.locations.cfiFromPercentage !== 'function') {
+            throw new Error('Page navigation is not ready yet.');
+        }
+
+        const page = Number(pageNumber);
+        if (!Number.isFinite(page)) {
+            throw new Error('Enter a valid page number.');
+        }
+
+        const clamped = Math.min(Math.max(Math.trunc(page), 1), totalPages);
+        const percentage = totalPages <= 1 ? 0 : (clamped - 1) / (totalPages - 1);
+        const cfi = book.locations.cfiFromPercentage(percentage);
+
+        if (!cfi) {
+            throw new Error('Unable to locate that page.');
+        }
+
+        rendition.display(cfi);
+        locationLabel.dataset.page = String(clamped);
+        setJumpStatus(`Jumped to page ${clamped}.`, 'success');
+        hidePageOverlay();
+    }
+
+    function toggleFullscreen() {
+        setFullscreen(!isFullscreen);
+    }
+
+    function timeoutPromise(ms, message) {
+        return new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error(message)), ms);
+        });
+    }
+
+    async function loadBook(url) {
+        setControlsDisabled(true);
+        setStatus('Loading EPUB...', 'success');
+        setLocation('Loading...');
+        viewer.innerHTML = '';
+
+        if (book && typeof book.destroy === 'function') {
+            await book.destroy();
+        }
+
+        book = ePub(url);
+        await book.ready;
+        if (book.locations && typeof book.locations.generate === 'function') {
+            await book.locations.generate(1600);
+            totalPages = Math.max(1, book.locations.length || 1);
+            pageJumpInput.max = String(totalPages);
+            setJumpStatus(`1 - ${totalPages}`);
+        } else {
+            totalPages = 1;
+            pageJumpInput.removeAttribute('max');
+            setJumpStatus('');
+        }
+        rendition = book.renderTo('viewer', {
+            method: 'default',
+            width: '100%',
+            height: '100%'
+        });
+
+        rendition.on('relocated', (location) => {
+            updatePageLocation(location);
+        });
+
+        await Promise.race([
+            rendition.display(),
+            timeoutPromise(LOAD_TIMEOUT_MS, 'EPUB took too long to render.')
+        ]);
+        setStatus('EPUB loaded.', 'success');
+        setControlsDisabled(false);
+    }
+
+    loadButton.addEventListener('click', () => {
+        loadBook(urlInput.value.trim()).catch((error) => {
+            setControlsDisabled(false);
+            setStatus(error.message || 'Unable to load EPUB.', 'error');
+        });
+    });
+
+    prevButton.addEventListener('click', () => {
+        if (rendition) {
+            rendition.prev();
+        }
+    });
+
+    nextButton.addEventListener('click', () => {
+        if (rendition) {
+            rendition.next();
+        }
+    });
+
+    fullscreenToggle.addEventListener('click', () => {
+        toggleFullscreen();
+    });
+
+    gestureLayer.addEventListener('click', (event) => {
+        if (!isFullscreen) {
+            return;
+        }
+
+        const rect = gestureLayer.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const centerWidth = rect.width * 0.36;
+        const centerHeight = rect.height * 0.28;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const inCenter =
+            Math.abs(x - centerX) <= centerWidth / 2 &&
+            Math.abs(y - centerY) <= centerHeight / 2;
+
+        if (inCenter) {
+            showPageOverlay();
+        }
+    });
+
+    overlayPrev.addEventListener('click', () => {
+        if (rendition) {
+            rendition.prev();
+        }
+    });
+
+    overlayNext.addEventListener('click', () => {
+        if (rendition) {
+            rendition.next();
+        }
+    });
+
+    overlayClose.addEventListener('click', hidePageOverlay);
+
+    pageJumpGo.addEventListener('click', () => {
+        try {
+            goToPage(pageJumpInput.value);
+        } catch (error) {
+            setJumpStatus(error.message, 'error');
+        }
+    });
+
+    pageJumpInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            pageJumpGo.click();
+        }
+    });
+
+    loadBook(DEFAULT_EPUB_URL).catch((error) => {
+        setControlsDisabled(false);
+        setStatus(error.message || 'Unable to load the sample EPUB.', 'error');
+    });
+</script>
+</body>
+</html>
