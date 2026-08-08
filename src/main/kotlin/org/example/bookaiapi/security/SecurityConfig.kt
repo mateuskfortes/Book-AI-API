@@ -28,6 +28,7 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers("/", "/error").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/signin", "/signup").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/signin").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/auth/validate").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/hello").permitAll()
