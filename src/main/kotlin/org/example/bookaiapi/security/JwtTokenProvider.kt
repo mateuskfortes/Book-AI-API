@@ -1,24 +1,29 @@
 package org.example.bookaiapi.security
 
+import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Date
 
 @Component
 class JwtTokenProvider(
     @Value("\${jwt.secret}") private val jwtSecret: String,
-    @Value("\${jwt.expiration}") private val jwtExpiration: Long
+    @Value("\${jwt.expiration}") private val jwtExpiration: Long,
 ) {
     private val key = Keys.hmacShaKeyFor(jwtSecret.toByteArray())
 
-    fun generateToken(userId: Long, email: String): String {
+    fun generateToken(
+        userId: Long,
+        email: String,
+    ): String {
         val now = Date()
         val expiryDate = Date(now.time + jwtExpiration)
 
-        return Jwts.builder()
+        return Jwts
+            .builder()
             .setSubject(userId.toString())
             .claim("email", email)
             .setIssuedAt(now)
@@ -28,32 +33,38 @@ class JwtTokenProvider(
     }
 
     fun getUserIdFromToken(token: String): Long {
-        val claims = Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .payload
+        val claims =
+            Jwts
+                .parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .payload
         return claims.subject.toLong()
     }
 
     fun getEmailFromToken(token: String): String? {
-        val claims = Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .payload
+        val claims =
+            Jwts
+                .parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .payload
         return claims.get("email") as? String
     }
 
-    fun validateToken(token: String): Boolean {
-        return try {
-            Jwts.parser()
+    fun validateToken(token: String): Boolean =
+        try {
+            Jwts
+                .parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
             true
-        } catch (e: Exception) {
+        } catch (_: JwtException) {
+            false
+        } catch (_: IllegalArgumentException) {
             false
         }
-    }
 }

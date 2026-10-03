@@ -5,9 +5,8 @@ import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 class BookAiApiApplicationTests {
-
     @Test
     fun contextLoads() {
+        // Loading the context verifies that Spring bean wiring is valid.
     }
-
 }

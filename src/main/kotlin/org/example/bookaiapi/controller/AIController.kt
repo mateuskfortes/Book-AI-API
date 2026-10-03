@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/ai")
 class AIController(
-    private val aiService: AIService
+    private val aiService: AIService,
 ) {
     @PostMapping("/explanation")
-    fun explanation(@RequestBody request: AIExplanationRequest): ResponseEntity<AIExplanationResponse> {
-        return ResponseEntity(aiService.explanation(request), HttpStatus.OK)
-    }
+    fun explanation(
+        @RequestBody request: AIExplanationRequest,
+    ): ResponseEntity<AIExplanationResponse> = ResponseEntity(aiService.explanation(request), HttpStatus.OK)
 }

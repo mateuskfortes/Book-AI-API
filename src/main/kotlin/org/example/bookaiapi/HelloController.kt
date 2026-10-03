@@ -7,9 +7,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api")
 class HelloController {
-
     @GetMapping("/hello")
-    fun hello(): Map<String, String> {
-        return mapOf("message" to "Hello, eeeeeaaaafffWorld!")
-    }
+    fun hello(): Map<String, String> = mapOf("message" to "Hello, eeeeeaaaafffWorld!")
 }

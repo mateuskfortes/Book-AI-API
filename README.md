@@ -1,189 +1,135 @@
 # Book AI API
 
-API de autenticação e explicação com JWT, PostgreSQL, Docker e Spring Boot.
+Aplicação web para autenticação de usuários, leitura de um livro EPUB e geração de explicações por IA. O projeto reúne uma API Kotlin/Spring Boot, PostgreSQL, autenticação stateless com JWT e um frontend React servido pelos recursos estáticos do próprio backend.
 
-## Features
+## Estado atual
 
-- User registration (sign up) with email and password
-- User authentication (sign in) with JWT tokens
-- Token validation
-- Password hashing using BCrypt
-- PostgreSQL database for user storage
-- Docker Compose for easy deployment
+O fluxo implementado é:
 
-## API Endpoints
+1. O usuário cria uma conta ou entra com email e senha.
+2. A API armazena a senha com BCrypt e retorna um JWT.
+3. O frontend salva o token em localStorage.
+4. A rota /read exibe o EPUB Moby-Dick usando react-reader e permite abrir o livro em tela cheia.
+5. Clientes autenticados podem chamar POST /api/ai/explanation, que encaminha a pergunta para a API Gemini.
 
-### Auth
+O leitor atual não chama o endpoint de IA nem envia o token salvo; essa integração ainda precisa ser conectada.
 
-#### Sign Up
+No modo tela cheia, o botão fica na barra superior. Para sair, use o botão voltar do celular, a seta voltar do navegador no desktop ou a tecla `Esc`; não há botão de saída dentro do leitor.
 
-**POST** `/api/auth/signup`
+## Tecnologias
 
-```json
-{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
-```
-
-Response `201 Created`:
-
-```json
-{
-  "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...",
-  "email": "user@example.com",
-  "userId": 1
-}
-```
-
-#### Sign In
-
-**POST** `/api/auth/signin`
-
-```json
-{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
-```
-
-Response `200 OK`:
-
-```json
-{
-  "token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...",
-  "email": "user@example.com",
-  "userId": 1
-}
-```
-
-#### Validate Token
-
-**GET** `/api/auth/validate`
-
-Headers:
-
-```http
-Authorization: Bearer <your_jwt_token>
-```
-
-Response `200 OK`:
-
-```json
-{
-  "valid": true
-}
-```
-
-### AI
-
-#### Explanation
-
-**POST** `/api/ai/explanation`
-
-Headers:
-
-```http
-Authorization: Bearer <your_jwt_token>
-```
-
-```json
-{
-  "question": "What is the capital of Brazil?"
-}
-```
-
-Response `200 OK`:
-
-```json
-{
-  "explanation": "..."
-}
-```
-
-## Running with Docker Compose
-
-### Start the application
-
-```bash
-docker-compose up -d
-```
-
-This will:
-
-- Start PostgreSQL on port 5432
-- Build and start the Spring Boot API on port 8080
-- Create the `bookaidb` database
-- Automatically create the `users` table (via Hibernate)
-
-### Stop the application
-
-```bash
-docker-compose down
-```
-
-### View logs
-
-```bash
-docker-compose logs -f app
-```
-
-## Environment Variables
-
-Configure in `.env` or `compose.yaml`:
-
-- `DB_HOST`: PostgreSQL host
-- `DB_PORT`: PostgreSQL port
-- `DB_NAME`: Database name
-- `DB_USER`: Database user
-- `DB_PASSWORD`: Database password
-- `JWT_SECRET`: Secret key for JWT signing
-- `JWT_EXPIRATION`: Token expiration time in milliseconds
-- `GEMINI_API_KEY`: Gemini API key
-- `EXPLANATION_AI_MODEL`: Model used for explanations
-
-## Testing
-
-### cURL examples
-
-**Register**
-
-```bash
-curl -X POST http://localhost:8080/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123!"}'
-```
-
-**Login**
-
-```bash
-curl -X POST http://localhost:8080/api/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123!"}'
-```
-
-**Validate Token**
-
-```bash
-curl -X GET http://localhost:8080/api/auth/validate \
-  -H "Authorization: Bearer <your_token>"
-```
-
-**AI Explanation**
-
-```bash
-curl -X POST http://localhost:8080/api/ai/explanation \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <your_jwt_token>" \
-  -d '{"question":"What is the capital of Brazil?"}'
-```
-
-## Technology Stack
-
-- Kotlin
+- Kotlin 2.3.21 e Java 21
 - Spring Boot 4.1.0
+- Spring Web, RestClient, Spring Security e Spring Data JPA
 - PostgreSQL 16
-- JWT (JSON Web Tokens)
-- BCrypt
-- Java 21
-- Docker & Docker Compose
+- JWT com JJWT 0.12.3 e BCrypt
+- React 18, Vite 6 e react-reader
+- Docker e Docker Compose
+
+## Estrutura
+
+    src/main/kotlin/org/example/bookaiapi/
+    ├── controller/       endpoints HTTP e páginas do frontend
+    ├── dto/              modelos de entrada e saída
+    ├── entity/           entidades JPA
+    ├── exception/        exceções de autenticação
+    ├── repository/       acesso ao PostgreSQL
+    ├── security/         filtro JWT e configuração do Spring Security
+    └── service/          regras de autenticação e chamada à Gemini
+
+    frontend/
+    ├── src/              aplicação React
+    ├── public/sample/    EPUB usado no desenvolvimento
+    └── vite.config.js    proxy local e saída do build
+
+    src/main/resources/
+    ├── static/            build gerado do React e EPUB publicado
+    └── templates/         páginas HTML antigas, sem uso no fluxo atual
+
+Consulte [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/API.md](docs/API.md) e [docs/OPERACAO.md](docs/OPERACAO.md) para os detalhes.
+Consulte também o [histórico de erros de build e lint](docs/erros/README.md) antes de investigar uma falha conhecida.
+
+## Configuração rápida
+
+Pré-requisitos: Java 21, Docker com Compose e Node.js com npm para desenvolver o frontend.
+
+    cp .env.example .env
+
+Preencha pelo menos JWT_SECRET, JWT_EXPIRATION e GEMINI_API_KEY. O segredo JWT precisa ter comprimento suficiente para HS512.
+
+### API com PostgreSQL local
+
+    ./gradlew bootRun
+
+A aplicação usa localhost:5432 e o banco bookaidb por padrão. O Hibernate usa ddl-auto=update e cria ou atualiza a tabela users.
+
+### Docker Compose de desenvolvimento
+
+    docker compose -f compose.dev.yaml up --build
+
+Esse compose publica a API em http://localhost:8080. O PostgreSQL fica disponível para a API no serviço postgres:5432 e, opcionalmente, no host pela porta definida em DB_PORT.
+
+### Frontend
+
+    cd frontend
+    npm ci
+    npm run dev
+
+O Vite abre http://localhost:5173 e encaminha /api para http://localhost:8080, conforme frontend/vite.config.js. O Dockerfile também executa esse build automaticamente antes de compilar o backend.
+
+Para gerar os arquivos servidos pelo Spring Boot:
+
+    cd frontend
+    npm run build
+
+O build é gravado em src/main/resources/static/. Ao usar compose.dev.yaml, essa etapa é executada dentro do Docker e não precisa ser feita manualmente.
+
+## Variáveis de ambiente
+
+| Variável | Obrigatória | Uso | Padrão |
+|---|---:|---|---|
+| DB_HOST | não | Host do PostgreSQL | localhost |
+| DB_PORT | não | Porta do PostgreSQL | 5432 |
+| DB_NAME | não | Nome do banco | bookaidb |
+| DB_USER | não | Usuário | postgres |
+| DB_PASSWORD | não | Senha | postgres |
+| JWT_SECRET | sim | Chave HS512 | — |
+| JWT_EXPIRATION | sim | Validade em milissegundos | — |
+| GEMINI_API_KEY | sim para IA | Chave da Gemini | — |
+| EXPLANATION_AI_MODEL | não | Modelo da IA | gemini-2.5-flash-lite |
+| SERVER_PORT | compose | Porta HTTP | padrão do Spring Boot |
+| IMAGE_TAG | deploy | Tag da imagem GHCR | — |
+
+Não comite .env, chaves Gemini, segredos JWT ou senhas reais.
+
+## Comandos úteis
+
+    ./gradlew bootRun
+    ./gradlew bootJar
+    ./gradlew lint
+    cd frontend && npm run lint
+    docker compose down
+
+`./gradlew lint` executa KtLint e Detekt no backend. `npm run lint` executa ESLint
+no frontend. Execute esses comandos antes de revisar ou publicar uma alteração.
+
+O único teste automatizado presente é um teste de carregamento do contexto. Não há testes de contrato para endpoints, persistência, JWT ou integração Gemini.
+
+## Deploy
+
+O compose.yaml usa a imagem ghcr.io/mateuskfortes/book-ai-api:\${IMAGE_TAG}, conecta o backend à rede externa shared-proxy e não publica diretamente a porta do container. A rede precisa existir e o proxy reverso deve encaminhar para o serviço book-ai na porta definida por SERVER_PORT.
+
+O Dockerfile faz build com JDK 21 e executa o JAR com JRE 21. Ele declara EXPOSE 8080; a porta efetiva também depende de SERVER_PORT.
+
+## Pontos de atenção conhecidos
+
+- As exceções de autenticação não têm handler HTTP global; o formato de erro depende do Spring.
+- GET /api/auth/validate é público, mas exige o header Authorization.
+- /read é pública e o frontend não verifica o JWT antes de renderizar o leitor.
+- O endpoint de IA exige autenticação, mas o frontend React não o chama.
+- src/main/resources/templates/ contém a implementação antiga; Thymeleaf não está mais nas dependências.
+- ddl-auto=update deve ser substituído por migrações versionadas em produção.
+
+## Licença
+
+Não há arquivo de licença no repositório. Defina uma licença antes de distribuir o projeto publicamente.
