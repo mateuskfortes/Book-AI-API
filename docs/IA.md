@@ -4,12 +4,12 @@ Este documento descreve o projeto de forma compacta e operacional para uma IA qu
 
 ## Resumo em uma frase
 
-Book AI é um monólito Kotlin/Spring Boot com PostgreSQL, JWT e integração Gemini, que serve um frontend React para autenticação e leitura de um EPUB.
+Book AI é um monólito Kotlin/Spring Boot com PostgreSQL, JWT e integração Gemini, que serve um frontend React para autenticação e leitura de um EPUB, pensado principalmente para execução dentro de uma WebView Android.
 
 ## Fluxo principal
 
     Browser
-      ├─ GET /signin, /signup, /read
+      ├─ GET /, /signin, /signup, /read
       │    └─ Spring encaminha para static/index.html
       ├─ POST /api/auth/signup ou /api/auth/signin
       │    └─ AuthService → UserRepository → BCrypt → JwtTokenProvider
@@ -21,7 +21,7 @@ Book AI é um monólito Kotlin/Spring Boot com PostgreSQL, JWT e integração Ge
 | Assunto | Arquivos principais |
 |---|---|
 | Rotas HTTP | controller/AuthController.kt, controller/AIController.kt |
-| Páginas web | controller/AuthPageController.kt, frontend/src/App.jsx |
+| Páginas web | controller/AuthPageController.kt, frontend/src/app/App.jsx, frontend/src/pages/ |
 | Autenticação | service/AuthService.kt, security/JwtTokenProvider.kt, security/JwtAuthenticationFilter.kt |
 | Autorização e CORS | security/SecurityConfig.kt |
 | Usuários | entity/User.kt, repository/UserRepository.kt |
@@ -54,6 +54,8 @@ POST /api/ai/explanation recebe { "question": "..." } e retorna { "explanation":
 - Rotas não listadas como públicas em SecurityConfig exigem autenticação.
 - CORS é uma lista explícita de origens. Ao adicionar frontend, atualize a configuração conscientemente.
 - O token é salvo em localStorage pelo React atual. Uma mudança de armazenamento altera o modelo de segurança e precisa ser documentada.
+- Na rota `/`, visitantes sem JWT válido são redirecionados para `/signin`; com JWT válido, a página mostra somente um botão para `/read`.
+- A rota React `/read` valida `book-ai-token` por `GET /api/auth/validate` e redireciona para `/signin` se ausente ou inválido. Quando a API não responde, mantém o token e falha de forma fechada para a tela de login.
 
 ## Como raciocinar sobre mudanças
 
@@ -99,7 +101,11 @@ Analise geração, parsing, filtro, endpoint de validação e expiração. Token
 
 Edite frontend/src. O build do Vite escreve em src/main/resources/static; não use os arquivos empacotados como fonte. Confira o proxy, as rotas de fallback e o EPUB.
 
-O leitor usa a Fullscreen API em `frontend/src/components/ReaderPage.jsx`. O botão inicia o modo tela cheia; o retorno deve continuar sendo feito pelo voltar do navegador ou do celular, sem adicionar um botão de saída. Alterações nesse fluxo devem preservar o tratamento de `fullscreenchange` e do histórico da rota `/read`.
+A navegação React usa React Router 6 em `frontend/src/app/App.jsx`, com `BrowserRouter` configurado em `frontend/src/main.jsx`. Mantenha páginas completas em `frontend/src/pages/`, componentes reutilizados em `components/global/` e componentes específicos junto à área em `components/auth/` ou `components/reader/`. O estado da sessão fica em `frontend/src/hooks/useValidatedSession.js` e as operações de token em `frontend/src/utils/tokenStorage.js`.
+
+O frontend roda principalmente dentro de uma WebView Android. Preserve a navegação da History API e a saída de tela cheia pelo botão voltar; o aplicativo hospedeiro deve encaminhar o voltar do Android ao histórico da WebView. Na rota `/`, visitantes são redirecionados para `/signin`, enquanto uma sessão válida vê somente o botão para `/read`. A rota `/read` exige JWT válido no React e manda sessões ausentes ou inválidas para `/signin`. Caminhos desconhecidos exibem uma página de não encontrado quando o frontend é servido. Ao adicionar rotas, atualize o controller de páginas Spring para permitir acesso direto à URL.
+
+O leitor usa a Fullscreen API em `frontend/src/pages/ReaderPage.jsx`. O botão inicia o modo tela cheia; o retorno deve continuar sendo feito pelo voltar do navegador ou do celular, sem adicionar um botão de saída. Alterações nesse fluxo devem preservar o tratamento de `fullscreenchange` e do histórico da rota `/read`.
 
 ### Se a mudança alterar o banco
 
@@ -112,7 +118,7 @@ Revise o formato real da resposta desserializada em GeminiResponse, tratamento d
 ## Dívidas técnicas já observadas
 
 1. O frontend não envia o JWT para chamadas posteriores e não faz logout ou renovação.
-2. /read está pública, apesar de a aplicação ter autenticação.
+2. O guard React protege a navegação de `/read`, mas o endpoint da página e o EPUB permanecem públicos no Spring.
 3. O frontend não usa a explicação por IA.
 4. Exceções de autenticação não possuem contrato HTTP global.
 5. A chamada Gemini não define timeout, retry ou tratamento específico de erro.

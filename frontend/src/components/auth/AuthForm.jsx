@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
-import { navigate } from '../utils/navigation';
+import { Link, useNavigate } from 'react-router-dom';
+import Button from '../global/Button';
+import { saveStoredToken } from '../../utils/tokenStorage';
 
-// Renderiza os formulários de cadastro e login usando o mesmo contrato da API.
+// Renderiza login ou cadastro e mantém o contrato atual da API de autenticação.
 export default function AuthForm({ mode }) {
+  const navigate = useNavigate();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const [email, setEmail] = useState(params.get('email') || '');
   const [password, setPassword] = useState('');
@@ -11,7 +14,7 @@ export default function AuthForm({ mode }) {
     params.get('registered') === '1' ? 'Account created. Sign in now.' : ''
   );
 
-  // Valida o formulário, autentica o usuário e guarda o JWT no navegador.
+  // Valida o formulário, autentica o usuário e guarda o JWT localmente.
   async function submit(event) {
     event.preventDefault();
 
@@ -32,7 +35,7 @@ export default function AuthForm({ mode }) {
       return;
     }
 
-    localStorage.setItem('book-ai-token', data.token);
+    saveStoredToken(data.token);
     navigate(mode === 'signup' ? `/signin?registered=1&email=${encodeURIComponent(email)}` : '/read');
   }
 
@@ -42,31 +45,27 @@ export default function AuthForm({ mode }) {
         <h1>{mode === 'signup' ? 'Sign up' : 'Sign in'}</h1>
         <p>{mode === 'signup' ? 'Create an account' : 'Use your account'}</p>
         <div className="status">{message}</div>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Email" />
+        <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="Email" />
         <input
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           type="password"
           placeholder="Password"
         />
         {mode === 'signup' ? (
           <input
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(event) => setConfirmPassword(event.target.value)}
             type="password"
             placeholder="Confirm password"
           />
         ) : null}
-        <button type="submit">{mode === 'signup' ? 'Create account' : 'Login'}</button>
+        <Button type="submit">{mode === 'signup' ? 'Create account' : 'Login'}</Button>
         <p>
           {mode === 'signup' ? (
-            <a href="/signin" onClick={(e) => { e.preventDefault(); navigate('/signin'); }}>
-              Sign in
-            </a>
+            <Link to="/signin">Sign in</Link>
           ) : (
-            <a href="/signup" onClick={(e) => { e.preventDefault(); navigate('/signup'); }}>
-              Create account
-            </a>
+            <Link to="/signup">Create account</Link>
           )}
         </p>
       </form>

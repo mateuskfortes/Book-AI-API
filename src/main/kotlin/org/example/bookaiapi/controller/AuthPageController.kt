@@ -15,8 +15,9 @@ class AuthPageController {
     @GetMapping("/read")
     fun read(): String = "forward:/index.html"
 
+    /** Encaminha a raiz ao React para renderizar a página inicial conforme a sessão. */
     @GetMapping("/")
-    fun root(): String = "redirect:/signin"
+    fun root(): String = "forward:/index.html"
 
     @GetMapping("/auth/login")
     fun legacySignin(): String = "redirect:/signin"

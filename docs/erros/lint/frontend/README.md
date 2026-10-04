@@ -7,3 +7,4 @@ Ao corrigir uma falha, altere a fonte em `frontend/src` ou a configuração do V
 ## Registros
 
 - [Erros iniciais de ESLint](erros-eslint-iniciais.md)
+- [Import não utilizado ao adicionar validação da rota raiz](import-nao-utilizado-na-validacao-da-raiz.md)

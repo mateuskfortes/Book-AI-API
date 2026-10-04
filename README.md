@@ -1,6 +1,6 @@
 # Book AI API
 
-Aplicação web para autenticação de usuários, leitura de um livro EPUB e geração de explicações por IA. O projeto reúne uma API Kotlin/Spring Boot, PostgreSQL, autenticação stateless com JWT e um frontend React servido pelos recursos estáticos do próprio backend.
+Aplicação web para autenticação de usuários, leitura de um livro EPUB e geração de explicações por IA. O projeto reúne uma API Kotlin/Spring Boot, PostgreSQL, autenticação stateless com JWT e um frontend React servido pelos recursos estáticos do próprio backend. O frontend é pensado principalmente para execução dentro de uma WebView Android.
 
 ## Estado atual
 
@@ -9,12 +9,16 @@ O fluxo implementado é:
 1. O usuário cria uma conta ou entra com email e senha.
 2. A API armazena a senha com BCrypt e retorna um JWT.
 3. O frontend salva o token em localStorage.
-4. A rota /read exibe o EPUB Moby-Dick usando react-reader e permite abrir o livro em tela cheia.
+4. A rota /read valida o JWT e exibe o EPUB Moby-Dick usando react-reader, com opção de tela cheia.
 5. Clientes autenticados podem chamar POST /api/ai/explanation, que encaminha a pergunta para a API Gemini.
+
+Na rota `/`, visitantes sem sessão válida são redirecionados para `/signin`. Com um JWT válido, a página inicial mostra apenas um botão para abrir `/read`.
 
 O leitor atual não chama o endpoint de IA nem envia o token salvo; essa integração ainda precisa ser conectada.
 
 No modo tela cheia, o botão fica na barra superior. Para sair, use o botão voltar do celular, a seta voltar do navegador no desktop ou a tecla `Esc`; não há botão de saída dentro do leitor.
+
+Como o front roda principalmente em uma WebView Android, a aplicação que hospeda a WebView deve encaminhar o botão voltar do Android ao histórico da WebView para preservar a navegação e a saída de tela cheia.
 
 ## Tecnologias
 
@@ -41,6 +45,19 @@ No modo tela cheia, o botão fica na barra superior. Para sair, use o botão vol
     ├── src/              aplicação React
     ├── public/sample/    EPUB usado no desenvolvimento
     └── vite.config.js    proxy local e saída do build
+
+O código React é organizado por responsabilidade:
+
+    frontend/src/
+    ├── app/              composição das rotas e proteção de sessão
+    ├── pages/            telas completas de cada rota
+    ├── components/
+    │   ├── global/       componentes reutilizados entre páginas
+    │   ├── auth/         componentes dos formulários de autenticação
+    │   └── reader/       controles específicos do leitor
+    ├── hooks/            estado de sessão reutilizável
+    ├── styles/           estilos globais
+    └── utils/            acesso ao token local
 
     src/main/resources/
     ├── static/            build gerado do React e EPUB publicado
@@ -125,7 +142,7 @@ O Dockerfile faz build com JDK 21 e executa o JAR com JRE 21. Ele declara EXPOSE
 
 - As exceções de autenticação não têm handler HTTP global; o formato de erro depende do Spring.
 - GET /api/auth/validate é público, mas exige o header Authorization.
-- /read é pública e o frontend não verifica o JWT antes de renderizar o leitor.
+- O React redireciona visitantes sem JWT válido de `/read` para `/signin`; a rota HTTP e o EPUB estático continuam públicos no Spring.
 - O endpoint de IA exige autenticação, mas o frontend React não o chama.
 - src/main/resources/templates/ contém a implementação antiga; Thymeleaf não está mais nas dependências.
 - ddl-auto=update deve ser substituído por migrações versionadas em produção.

@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { ReactReader } from 'react-reader';
-import { logout } from '../utils/navigation';
+import { useNavigate } from 'react-router-dom';
+import ReaderToolbar from '../components/reader/ReaderToolbar';
+import { clearStoredToken } from '../utils/tokenStorage';
+import './reader.css';
 
 const SAMPLE_EPUB = '/sample/moby-dick.epub';
 
 // Exibe o EPUB e mantém a navegação por clique nas laterais da página.
 export default function ReaderPage() {
+  const navigate = useNavigate();
   const [location, setLocation] = useState(null);
   const [firstRenderDone, setFirstRenderDone] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -61,34 +65,24 @@ export default function ReaderPage() {
     fullscreenHistoryRef.current = true;
   };
 
+  // Apaga o token local e retorna à autenticação pelo roteador React.
+  const handleLogout = () => {
+    clearStoredToken();
+    navigate('/signin');
+  };
+
   return (
     <main
-        ref={readerPageRef}
+      ref={readerPageRef}
       className={`page reader-page${isFullscreen ? ' is-fullscreen' : ''}`}
-      style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
     >
-      <div
-        className="reader-topbar"
-        style={{ height: '50px', padding: '0 20px', display: isFullscreen ? 'none' : 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid #e0e0e0', background: '#fff' }}
-        >
-        <button
-          type="button"
-          onClick={enterFullscreen}
-          className="reader-fullscreen-button"
-          title="Abrir livro em tela cheia"
-        >
-          Tela cheia
-        </button>
-        <button
-          type="button"
-          onClick={logout}
-          style={{ color: '#007bff', textDecoration: 'none', background: 'none', border: 0, padding: 0, cursor: 'pointer' }}
-        >
-          Logout
-        </button>
-      </div>
+      <ReaderToolbar
+        isFullscreen={isFullscreen}
+        onEnterFullscreen={enterFullscreen}
+        onLogout={handleLogout}
+      />
 
-      <div className="reader-card" style={{ flex: 1, position: 'relative', background: '#fcfbfa' }}>
+      <div className="reader-card">
         <ReactReader
           url={origin + SAMPLE_EPUB}
           location={location}

@@ -1,0 +1,45 @@
+.reader-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.reader-toolbar {
+  min-height: 50px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+.reader-toolbar .button--quiet {
+  color: #007bff;
+}
+
+.reader-card {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  background: #fcfbfa;
+}
+
+.reader-card > * {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
+.reader-page:fullscreen {
+  padding: 0;
+  background: #fcfbfa;
+}
+
+.reader-page:fullscreen .reader-card {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
