@@ -84,6 +84,7 @@ export default function ReaderPage() {
 
       <div className="reader-card">
         <ReactReader
+          showToc
           url={origin + SAMPLE_EPUB}
           location={location}
           locationChanged={locationChanged}
@@ -127,6 +128,24 @@ const customReaderStyles = {
     ...ReactReaderStyle.tocArea,
     background: '#ffffff',
     borderRight: '1px solid #e0e0e0'
+  },
+  // Mantém o controle do índice acima das áreas de toque, inclusive em tela cheia.
+  tocButton: {
+    ...ReactReaderStyle.tocButton,
+    zIndex: 20,
+    top: 12,
+    left: 12,
+    width: 44,
+    height: 44,
+    background: '#ffffff',
+    border: '1px solid #cbd5e1',
+    borderRadius: 8,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+  },
+  tocButtonBar: {
+    ...ReactReaderStyle.tocButtonBar,
+    background: '#334155',
+    transition: 'none'
   },
   reader: {
     ...ReactReaderStyle.reader,
