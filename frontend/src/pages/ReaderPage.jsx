@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ReactReader } from 'react-reader';
+import { ReactReader, ReactReaderStyle } from 'react-reader';
 import { useNavigate } from 'react-router-dom';
 import ReaderToolbar from '../components/reader/ReaderToolbar';
 import { clearStoredToken } from '../utils/tokenStorage';
@@ -107,45 +107,7 @@ export default function ReaderPage() {
               }
             });
           }}
-          readerStyles={{
-            ...customReaderStyles,
-            reader: {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0
-            },
-            // Ocupa 40% de cada lateral sem bloquear a seleção no centro.
-            prev: {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: '40%',
-              zIndex: 10,
-              cursor: 'pointer',
-              margin: 0,
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              color: 'transparent'
-            },
-            next: {
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: '40%',
-              zIndex: 10,
-              cursor: 'pointer',
-              margin: 0,
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              color: 'transparent'
-            }
-          }}
+          readerStyles={customReaderStyles}
           epubOptions={{ allowScriptedContent: false, flow: 'paginated' }}
           loadingView={<div>Carregando livro...</div>}
         />
@@ -154,14 +116,58 @@ export default function ReaderPage() {
   );
 }
 
-// Mantém os controles de navegação invisíveis e conserva a área de índice legível.
+// Preserva as camadas padrão para que a página cubra o índice fechado durante a navegação.
 const customReaderStyles = {
+  ...ReactReaderStyle,
+  readerArea: {
+    ...ReactReaderStyle.readerArea,
+    transition: 'none'
+  },
   tocArea: {
+    ...ReactReaderStyle.tocArea,
     background: '#ffffff',
-    transition: 'all 0.3s ease',
     borderRight: '1px solid #e0e0e0'
   },
+  reader: {
+    ...ReactReaderStyle.reader,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
+  },
+  // Ocupa 40% de cada lateral sem bloquear a seleção no centro.
+  prev: {
+    ...ReactReaderStyle.prev,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '40%',
+    zIndex: 10,
+    cursor: 'pointer',
+    margin: 0,
+    padding: 0,
+    background: 'transparent',
+    border: 'none',
+    color: 'transparent'
+  },
+  next: {
+    ...ReactReaderStyle.next,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '40%',
+    zIndex: 10,
+    cursor: 'pointer',
+    margin: 0,
+    padding: 0,
+    background: 'transparent',
+    border: 'none',
+    color: 'transparent'
+  },
   arrow: {
+    ...ReactReaderStyle.arrow,
     background: 'transparent',
     color: 'transparent',
     border: 'none',

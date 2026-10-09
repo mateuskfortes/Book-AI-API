@@ -105,7 +105,7 @@ A navegação React usa React Router 6 em `frontend/src/app/App.jsx`, com `Brows
 
 O frontend roda principalmente dentro de uma WebView Android. Preserve a navegação da History API e a saída de tela cheia pelo botão voltar; o aplicativo hospedeiro deve encaminhar o voltar do Android ao histórico da WebView. Na rota `/`, visitantes são redirecionados para `/signin`, enquanto uma sessão válida vê somente o botão para `/read`. A rota `/read` exige JWT válido no React e manda sessões ausentes ou inválidas para `/signin`. Caminhos desconhecidos exibem uma página de não encontrado quando o frontend é servido. Ao adicionar rotas, atualize o controller de páginas Spring para permitir acesso direto à URL.
 
-O leitor usa a Fullscreen API em `frontend/src/pages/ReaderPage.jsx`. O botão inicia o modo tela cheia; o retorno deve continuar sendo feito pelo voltar do navegador ou do celular, sem adicionar um botão de saída. Alterações nesse fluxo devem preservar o tratamento de `fullscreenchange` e do histórico da rota `/read`.
+O leitor usa a Fullscreen API em `frontend/src/pages/ReaderPage.jsx`. O botão inicia o modo tela cheia; o retorno deve continuar sendo feito pelo voltar do navegador ou do celular, sem adicionar um botão de saída. Alterações nesse fluxo devem preservar o tratamento de `fullscreenchange` e do histórico da rota `/read`. Ao personalizar `readerStyles` do `react-reader`, parta de `ReactReaderStyle`: a prop substitui o objeto inteiro e os estilos de camada padrão mantêm o índice fechado atrás da página.
 
 ### Se a mudança alterar o banco
 
